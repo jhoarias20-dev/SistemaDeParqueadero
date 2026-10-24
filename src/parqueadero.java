@@ -1,3 +1,4 @@
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -40,6 +41,9 @@ public class Parqueadero {
             switch (opcion) {
                 case 1:
                     registrarEntrada();
+                    break;
+                case 2:
+                    registrarSalida();
                     break;
                 case 5:
                     salir = true;
@@ -105,6 +109,81 @@ public class Parqueadero {
 
         imprimir("Ingreso registrado. " + tiposVehiculo[indice]
                 + " asignado a la celda " + (indice + 1) + ".");
+    }
+
+    static void registrarSalida() {
+        if (celdasOcupadas == 0) {
+            imprimir("No hay vehículos en el parqueadero.");
+            return;
+        }
+
+        int indice = leerCeldaOcupada();
+        LocalDateTime ingreso = fechasIngreso[indice];
+        LocalDateTime salida = leerFechaHoraSalida(ingreso);
+
+        long total = liquidar(indice, ingreso, salida);
+
+        if (tiposVehiculo[indice].equals(CARRO)) {
+            recaudoCarros += total;
+        } else {
+            recaudoMotos += total;
+        }
+
+        tiposVehiculo[indice] = null;
+        fechasIngreso[indice] = null;
+        celdasOcupadas--;
+        celdasLibres++;
+    }
+
+    static long liquidar(int indice, LocalDateTime ingreso, LocalDateTime salida) {
+        boolean esCarro = tiposVehiculo[indice].equals(CARRO);
+        long tarifaHora = esCarro ? TARIFA_HORA_CARRO : TARIFA_HORA_MOTO;
+        long tarifaDia = esCarro ? TARIFA_DIA_CARRO : TARIFA_DIA_MOTO;
+
+        long minutos = Duration.between(ingreso, salida).toMinutes();
+        long horas = (minutos + 59) / 60;
+        if (horas < 1) {
+            horas = 1;
+        }
+
+        long dias = horas / 24;
+        long horasRestantes = horas % 24;
+
+        long total = dias * tarifaDia;
+        if (horasRestantes >= UMBRAL_HORAS_DIA) {
+            total += tarifaDia;
+        } else {
+            total += horasRestantes * tarifaHora;
+        }
+
+        imprimir("");
+        imprimir("Vehículo: " + tiposVehiculo[indice] + " | Celda: " + (indice + 1));
+        imprimir("Ingreso: " + ingreso.format(FORMATO_FECHA_HORA));
+        imprimir("Salida: " + salida.format(FORMATO_FECHA_HORA));
+        imprimir("Horas cobradas: " + horas);
+        imprimir("Total a pagar: $" + total);
+
+        return total;
+    }
+
+    static int leerCeldaOcupada() {
+        while (true) {
+            int celda = leerEnteroValidado("Número de celda (1-" + CAPACIDAD_TOTAL + "): ", 1, CAPACIDAD_TOTAL);
+            if (tiposVehiculo[celda - 1] != null) {
+                return celda - 1;
+            }
+            imprimir("La celda " + celda + " está libre. Indique una celda ocupada.");
+        }
+    }
+
+    static LocalDateTime leerFechaHoraSalida(LocalDateTime ingreso) {
+        while (true) {
+            LocalDateTime salida = leerFechaHora("Fecha y hora de salida (yyyy-MM-dd HH:mm): ");
+            if (!salida.isBefore(ingreso)) {
+                return salida;
+            }
+            imprimir("La salida no puede ser anterior al ingreso (" + ingreso.format(FORMATO_FECHA_HORA) + ").");
+        }
     }
 
     static int buscarCeldaDisponible() {
