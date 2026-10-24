@@ -63,6 +63,30 @@ public class Parqueadero {
         recaudoMotos = 0;
     }
 
+    static void registrarEntrada() {
+        int indice = buscarCeldaDisponible();
+        if (indice == -1) {
+            imprimir("El parqueadero está lleno. No es posible registrar el ingreso.");
+            return;
+        }
 
+        int tipo = leerEnteroValidado("Tipo de vehículo (1. Carro, 2. Moto): ", 1, 2);
+        LocalDateTime ingreso = leerFechaHora("Fecha y hora de ingreso (yyyy-MM-dd HH:mm): ");
 
+        tiposVehiculo[indice] = (tipo == 1) ? CARRO : MOTO;
+        fechasIngreso[indice] = ingreso;
+        celdasOcupadas++;
+        celdasLibres--;
+
+        imprimir("Ingreso registrado. " + tiposVehiculo[indice] + " asignado a la celda " + (indice + 1) + ".");
+    }
+
+    static int buscarCeldaDisponible() {
+        for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
+            if (tiposVehiculo[i] == null) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
