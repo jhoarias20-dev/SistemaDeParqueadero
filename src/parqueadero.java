@@ -52,4 +52,17 @@ public class Parqueadero {
     static int celdasLibres;
     static long recaudoCarros;
     static long recaudoMotos;
+    static void inicializarArreglos() {
+        for (int i = 0; i < CAPACIDAD_TOTAL; i++) {
+            tiposVehiculo[i] = null;
+            fechasIngreso[i] = null;
+        }
+        celdasOcupadas = 0;
+        celdasLibres = CAPACIDAD_TOTAL;
+        recaudoCarros = 0;
+        recaudoMotos = 0;
+    }
+
+
+
 }
