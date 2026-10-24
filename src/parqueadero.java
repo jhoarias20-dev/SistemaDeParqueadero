@@ -46,11 +46,14 @@ public class Parqueadero {
                 case 2:
                     registrarSalida();
                     break;
+                case 3:
+                    reporteOcupacion();
+                    break;
+                case 4:
+                    reporteFinanciero();
+                    break;
                 case 5:
                     salir = true;
-                    break;
-                default:
-                    imprimir("Opción aún no disponible.");
                     break;
             }
         }
@@ -290,5 +293,20 @@ public class Parqueadero {
             valor = valor * 10 + caracter - '0';
         }
         return valor;
+    }
+
+    static void reporteOcupacion() {
+        imprimir("");
+        imprimir("--- Reporte de ocupación ---");
+        imprimir("Celdas ocupadas: " + celdasOcupadas);
+        imprimir("Celdas libres: " + celdasLibres);
+    }
+
+    static void reporteFinanciero() {
+        imprimir("");
+        imprimir("--- Reporte financiero ---");
+        imprimir("Total recaudado por carros: " + formatearMoneda(recaudoCarros));
+        imprimir("Total recaudado por motos: " + formatearMoneda(recaudoMotos));
+        imprimir("Total general recaudado: " + formatearMoneda(recaudoCarros + recaudoMotos));
     }
 }
