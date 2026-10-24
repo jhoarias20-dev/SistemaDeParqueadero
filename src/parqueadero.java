@@ -2,6 +2,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 
 public class Parqueadero {
@@ -137,33 +138,55 @@ public class Parqueadero {
 
     static long liquidar(int indice, LocalDateTime ingreso, LocalDateTime salida) {
         boolean esCarro = tiposVehiculo[indice].equals(CARRO);
-        long tarifaHora = esCarro ? TARIFA_HORA_CARRO : TARIFA_HORA_MOTO;
         long tarifaDia = esCarro ? TARIFA_DIA_CARRO : TARIFA_DIA_MOTO;
+        long tarifaHora = esCarro ? TARIFA_HORA_CARRO : TARIFA_HORA_MOTO;
 
-        long minutos = Duration.between(ingreso, salida).toMinutes();
-        long horas = (minutos + 59) / 60;
-        if (horas < 1) {
-            horas = 1;
+        long diasACobrar = contarDiasCompletos(ingreso, salida);
+        LocalDateTime cursor = ingreso.plusDays(diasACobrar);
+        long horasACobrar = calcularHorasRestantes(cursor, salida);
+
+        if (horasACobrar >= UMBRAL_HORAS_DIA) {
+            diasACobrar++;
+            horasACobrar = 0;
         }
 
-        long dias = horas / 24;
-        long horasRestantes = horas % 24;
-
-        long total = dias * tarifaDia;
-        if (horasRestantes >= UMBRAL_HORAS_DIA) {
-            total += tarifaDia;
-        } else {
-            total += horasRestantes * tarifaHora;
+        if (diasACobrar == 0 && horasACobrar == 0) {
+            horasACobrar = 1;
         }
+
+        long subtotalDias = diasACobrar * tarifaDia;
+        long subtotalHoras = horasACobrar * tarifaHora;
+        long total = subtotalDias + subtotalHoras;
 
         imprimir("");
-        imprimir("Vehículo: " + tiposVehiculo[indice] + " | Celda: " + (indice + 1));
+        imprimir("========== FACTURA ==========");
+        imprimir("Celda liberada: " + (indice + 1));
+        imprimir("Tipo de vehículo: " + tiposVehiculo[indice]);
         imprimir("Ingreso: " + ingreso.format(FORMATO_FECHA_HORA));
-        imprimir("Salida: " + salida.format(FORMATO_FECHA_HORA));
-        imprimir("Horas cobradas: " + horas);
-        imprimir("Total a pagar: $" + total);
+        imprimir("Salida:  " + salida.format(FORMATO_FECHA_HORA));
+        if (diasACobrar > 0) {
+            imprimir(diasACobrar + " día(s) x " + formatearMoneda(tarifaDia) + " = " + formatearMoneda(subtotalDias));
+        }
+        if (horasACobrar > 0) {
+            imprimir(horasACobrar + " hora(s) x " + formatearMoneda(tarifaHora) + " = " + formatearMoneda(subtotalHoras));
+        }
+        imprimir("TOTAL A PAGAR: " + formatearMoneda(total));
+        imprimir("=============================");
 
         return total;
+    }
+
+    static long contarDiasCompletos(LocalDateTime ingreso, LocalDateTime salida) {
+        return ChronoUnit.DAYS.between(ingreso, salida);
+    }
+
+    static long calcularHorasRestantes(LocalDateTime cursor, LocalDateTime salida) {
+        long minutosRestantes = Duration.between(cursor, salida).toMinutes();
+        return (minutosRestantes + 59) / 60;
+    }
+
+    static String formatearMoneda(long valor) {
+        return String.format("$%,d", valor);
     }
 
     static int leerCeldaOcupada() {
